@@ -125,7 +125,7 @@ dist-ssr/
 
 # ── Claude Code — never commit ───────────────────────────────
 .claude/
-CLAUDE.md
+# CLAUDE.md is tracked in this personal fork (colinchin/FinceptTerminal)
 fincept-qt/DESIGN_SYSTEM.md
 
 # ── Build output (uitest) ─────────────────────────────────────
