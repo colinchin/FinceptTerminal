@@ -47,6 +47,14 @@ cmake --build --preset win-dev         # rebuild after every change
   (`FINCEPT_QT_PIN_MODE`) or the toolchain version checks in CMakeLists.txt.
 - Requires MSVC 19.40+ (VS 2022 17.10+). Keep >= 5 GB RAM free while building.
   If builds crawl, cap jobs: `-DFINCEPT_MAX_COMPILE_JOBS=4`.
+- `Launch-VsDevShell.ps1` also resets `VCPKG_ROOT` to VS's bundled vcpkg. Set
+  `$env:VCPKG_ROOT = 'D:\Source\vcpkg'` after entering the shell — CMakeLists.txt looks for
+  OpenSSL under `$ENV{VCPKG_ROOT}` whenever a CMakeLists edit triggers a re-configure.
+- Close any running `FinceptTerminal.exe` from `build\win-dev` before building, or the link fails
+  with LNK1168 (exe locked). The app opens on a PIN lock screen; only I can unlock it.
+- A re-configure recompiles QXlsx, which prints ~200 `D9025` command-line overrides, and
+  windeployqt warns about missing `Qt6SerialPort.dll`. Both are pre-existing; only `warning C####`
+  lines from our sources count as new warnings.
 - A one-line change should rebuild in seconds. If it takes minutes, check free RAM first.
 - Build output (`fincept-qt/build*/`) is git-ignored. Never commit build artefacts.
 - There is no guest mode in this version: the app needs a (free) Fincept account and must reach
@@ -68,6 +76,14 @@ cmake --build --preset win-dev         # rebuild after every change
 - `scripts/` — Python data fetchers and analytics, called by C++ as (command, JSON)
 - `docs/CPP_CONTRIBUTOR_GUIDE.md`, `docs/PYTHON_CONTRIBUTOR_GUIDE.md`, `docs/ARCHITECTURE.md`
   (repo root `docs/`)
+- `docs/custom/` — my step specs. Upstream's `.gitignore` has a blanket `*.md` rule, so these are
+  untracked unless added with `git add -f`.
+- `src/screens/options_lab/` — Options Lab tab (embeds the goldie-oci dashboard). URL comes from
+  AppConfig key `options_lab/base_url` (default `http://100.89.79.67:8095`).
+- `tools/optionslab_mcp/` (repo root) — read-only Python MCP server over the Options Lab API, registered
+  in Fincept's MCP Servers screen as "Options Lab". Own venv (`.venv`, git-ignored); tests:
+  `.venv\Scripts\python.exe -m pytest -q`. Its README has the exact MCP Servers values and how AI Chat
+  calls external tools. Keep every tool GET-only; never expose Options Lab's POST/DELETE endpoints.
 
 ## Code rules (from the upstream contributor guide)
 - Screens render UI only. No HTTP and no business logic in `*Screen.cpp`; that goes in a `*Service`.
@@ -75,8 +91,12 @@ cmake --build --preset win-dev         # rebuild after every change
 - Reuse `ui::Card`, `ui::DataTable`, `ui::SearchBar`, `ui::StatusBadge`.
 - Pointer-to-member `connect(...)` only; `Q_OBJECT` in every QObject subclass.
 - UI on the main thread; background work via QThread/QtConcurrent, results back via signals.
-- New screen: folder under `src/screens/`, add .cpp to `SCREEN_SOURCES` in CMakeLists.txt,
-  register lazily in `WindowFrame_Setup.cpp`, add ToolBar + CommandBar entries.
+- New screen: folder under `src/screens/`, add .cpp to `SCREEN_SOURCES` in CMakeLists.txt **and**
+  to the `SKIP_UNITY_BUILD_INCLUSION` list below it (every screen is in both), register lazily in
+  `WindowFrame_Setup.cpp`, add the tab title to the map in `DockScreenRouter.cpp`, add ToolBar +
+  CommandBar entries.
+- Never construct a `QWebEngineView` without first checking `QtWebEngineProcess` exists at runtime
+  (see `KLineChartWidget.cpp` / `OptionsLabScreen.cpp`) — a missing helper aborts the whole app.
 - Style: 4 spaces, 120 cols, snake_case functions/vars, PascalCase types, trailing `_` on members.
 - Prefer adding new files over editing upstream files, so upstream merges stay easy.
   When an upstream file must change, keep the edit small and mark it `// [equity-custom]`.
@@ -94,20 +114,11 @@ cmake --build --preset win-dev         # rebuild after every change
   with a distinct TWS API client ID (options-pricing uses 17/19/21). Fincept's existing
   `IBKRBroker` speaks the Client Portal REST API, not the TWS socket API, so this needs a new
   adapter or a local bridge — design it before building it.
-- Paper account: DUP767567. Background on the existing Client Portal adapter
+- Paper account: an IBKR paper account (DU…; number deliberately not recorded here — this repo is public). Background on the existing Client Portal adapter
   (`src/trading/brokers/ibkr/IBKRBroker.cpp`; ACCOUNT ID = DU…, GATEWAY URL = local Client Portal
   Gateway): it does no custom SSL handling, so it only works with the gateway set to
   `listenSsl: false` at `http://localhost:5000`; it never calls `ssodh/init` or `/tickle`, so
   sessions are not established or kept alive. Any TLS relaxation must be limited to localhost.
-
-## Options Lab link (separate project on goldie-oci)
-- Options Lab (D:\Source\options-pricing, deployed on goldie-oci) is the options engine; Fincept is
-  the cockpit. Its web UI + API are reachable over Tailscale at `http://100.89.79.67:8095`.
-- Integration is built in steps, one at a time, each with its own spec:
-  `docs/custom/OPTIONS_LAB_STEP2_SCREEN.md` (embed the dashboard as a Fincept screen),
-  `docs/custom/OPTIONS_LAB_STEP3_MCP.md` (read-only MCP server for AI Chat). Step 4 (IBKR data via the
-  goldie-oci Gateway) has no spec yet — do not start it.
-- Never call Options Lab's write endpoints (POST/DELETE) from Fincept code or tools.
 
 ## Trading safety (non-negotiable)
 - Every trading change is proven in **paper trading** before it can touch a live broker account.
