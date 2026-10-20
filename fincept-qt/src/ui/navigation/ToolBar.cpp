@@ -443,6 +443,7 @@ QMenu* ToolBar::build_navigate_menu() {
     nav(trd, tr("Prediction Markets"), "polymarket");
     nav(trd, tr("Derivatives"), "derivatives");
     nav(trd, tr("F&&O"), "fno");
+    nav(trd, tr("Options Lab"), "options_lab"); // [equity-custom]
     nav(trd, tr("Watchlist"), "watchlist");
 
     auto* crypto = add_sub(tr("Crypto"));

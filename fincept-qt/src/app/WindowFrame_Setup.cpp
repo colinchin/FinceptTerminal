@@ -63,6 +63,7 @@
 #include "screens/news/NewsScreen.h"
 #include "screens/node_editor/NodeEditorScreen.h"
 #include "screens/notes/NotesScreen.h"
+#include "screens/options_lab/OptionsLabScreen.h" // [equity-custom]
 #include "screens/polymarket/PolymarketScreen.h"
 #include "screens/portfolio/PortfolioScreen.h"
 #include "screens/profile/ProfileScreen.h"
@@ -256,6 +257,7 @@ void WindowFrame::setup_dock_screens() {
     dock_router_->register_factory("polymarket", []() { return new screens::PolymarketScreen; });
     dock_router_->register_factory("derivatives", []() { return new screens::DerivativesScreen; });
     dock_router_->register_factory("fno", []() { return new screens::fno::FnoScreen; });
+    dock_router_->register_factory("options_lab", []() { return new screens::OptionsLabScreen; }); // [equity-custom]
     dock_router_->register_factory("equity_research", []() { return new screens::EquityResearchScreen; });
     dock_router_->register_factory("screener", []() { return new screens::ScreenerScreen; });
     dock_router_->register_factory("ma_analytics", []() { return new screens::MAAnalyticsScreen; });

@@ -1749,6 +1749,8 @@ set(SCREEN_SOURCES
     src/screens/equity_trading/OrderConfirmDialog.cpp
     src/screens/equity_trading/PortfolioReplicationDialog.cpp
     src/screens/portfolio_monitor/PortfolioMonitorScreen.cpp
+    # [equity-custom] Options Lab — embedded goldie-oci dashboard
+    src/screens/options_lab/OptionsLabScreen.cpp
     # Feed monitor (reusable across screens)
     src/screens/common/feeds/FeedCardView.cpp
     src/screens/common/feeds/FeedTableView.cpp
@@ -2251,6 +2253,8 @@ set_source_files_properties(
     src/screens/equity_trading/OrderConfirmDialog.cpp
     src/screens/equity_trading/PortfolioReplicationDialog.cpp
     src/screens/portfolio_monitor/PortfolioMonitorScreen.cpp
+    # [equity-custom] Options Lab — embedded goldie-oci dashboard
+    src/screens/options_lab/OptionsLabScreen.cpp
     # Feed monitor (reusable across screens)
     src/screens/common/feeds/FeedCardView.cpp
     src/screens/common/feeds/FeedTableView.cpp

@@ -228,6 +228,13 @@ void CommandBar::build_commands() {
          {"fno", "options", "chain", "strategy", "sensibull"},
          "",
          {"options", "chain", "strategy", "payoff", "oi", "fno", "futures"}},
+        // [equity-custom] Options Lab dashboard on goldie-oci (embedded web view)
+        {"options_lab",
+         tr("Options Lab"),
+         "Options Lab dashboard (goldie-oci)",
+         {"optlab", "optionslab", "olab"},
+         "",
+         {"options", "lab", "greeks", "pricing", "positions"}},
         // Research
         {"equity_research",
          tr("Equity Research"),

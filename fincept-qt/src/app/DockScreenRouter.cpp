@@ -76,6 +76,7 @@ QString DockScreenRouter::title_for_id(const QString& id) {
         {"relationship_map", QT_TRANSLATE_NOOP("fincept::DockScreenRouter", "Relationship Map")},
         {"derivatives", QT_TRANSLATE_NOOP("fincept::DockScreenRouter", "Derivatives")},
         {"fno", QT_TRANSLATE_NOOP("fincept::DockScreenRouter", "F&O")},
+        {"options_lab", QT_TRANSLATE_NOOP("fincept::DockScreenRouter", "Options Lab")}, // [equity-custom]
         {"screener", QT_TRANSLATE_NOOP("fincept::DockScreenRouter", "Screener")},
         {"crypto_center", QT_TRANSLATE_NOOP("fincept::DockScreenRouter", "Crypto Center")},
         {"alt_investments", QT_TRANSLATE_NOOP("fincept::DockScreenRouter", "Alt Investments")},
