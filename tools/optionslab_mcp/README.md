@@ -24,8 +24,8 @@ SPEC_PROPOSALS.md Part A, deployed on goldie-oci 2026-10-21). No GET writes Opti
 its paper trader, scheduler or their caches; a parametrised test over every GET route enforces it
 (`tests/test_get_purity.py` in the options-pricing repo). Before a health run exists (just after a restart whose
 startup run failed), `/api/health` returns `state: "not_ready"` with no checks and zero counts, instead of
-running one; `optionslab_health` does not pass `state` through yet, so treat zero counts with no `run_ts` as
-"not run yet".
+running one. `optionslab_health` passes `state` through as its first field, plus Options Lab's `note` when
+there is one, so zero counts with `state: "not_ready"` read as "not run yet", not as a pass.
 
 Before that fix, the review found that two of Options Lab's *GET* endpoints had side effects.
 `GET /api/health` ran and saved a health check when none was cached (only after a failed startup run), and
@@ -37,7 +37,7 @@ thread. Neither placed, changed or cancelled anything, but they were not strictl
 | Tool | Endpoint | Notes |
 |---|---|---|
 | `optionslab_status` | `/api/status` | market open/closed, data source, per-ticker refresh state |
-| `optionslab_health` | `/api/health` | check counts + one line per check; per-check detail and history dropped |
+| `optionslab_health` | `/api/health` | `state` (`ready`/`not_ready`), check counts + one line per check; per-check detail and history dropped |
 | `optionslab_watchlist` | `/api/watchlist` | spot and ATM 30-day IV per ticker (adds `atm30_iv_pct`) |
 | `optionslab_chain(ticker)` | `/api/chain/{ticker}` | 11 strikes nearest ATM, 10 fields per leg |
 | `optionslab_smile(ticker)` | `/api/smile/{ticker}` | 25 quoted points (ATM kept) + 15 fitted knots |

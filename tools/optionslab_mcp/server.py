@@ -288,13 +288,18 @@ async def optionslab_status() -> CallToolResult:
 @_tool(
     "Options Lab health checks: are the Options Lab checks passing? PASS/FAIL/UNTESTED/FLAG counts and each "
     "pricing-engine and data-quality check with its verdict. UNTESTED means the check needs live quotes and the "
-    "market is closed; judged_verdict is what it gives on the latest snapshot anyway."
+    "market is closed; judged_verdict is what it gives on the latest snapshot anyway. state is 'not_ready' when "
+    "the checks have not run yet: the counts are then all zero, which is not a pass."
 )
 async def optionslab_health() -> CallToolResult:
     async def body():
         data = await lab._get("/api/health")
         checks = data.get("checks", [])
-        out = {k: data.get(k) for k in ("counts", "run_ts", "scope")}
+        # state (Options Lab 2026-10-21+): "ready", or "not_ready" with empty checks, all-zero counts and a `note`
+        # saying why. Passed through as-is (None from an older Options Lab), first, so it is read before counts.
+        out = {k: data.get(k) for k in ("state", "counts", "run_ts", "scope")}
+        if data.get("note"):
+            out["note"] = data["note"]
         out["market_open"] = next((c.get("market_open") for c in checks), None)
         out["checks"] = []
         for c in checks:

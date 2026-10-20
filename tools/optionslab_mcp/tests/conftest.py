@@ -70,6 +70,7 @@ def payloads() -> dict[str, object]:
         "/api/status": {"market_open": False, "source": "ibkr", "tickers": {t: {"error": None} for t in TICKERS}},
         "/api/session-summary": {"day": "2026-10-19", "text": "ok", "report": {"ok": True}},
         "/api/health": {
+            "state": "ready",
             "counts": {"PASS": 6, "FAIL": 0, "UNTESTED": 8, "FLAG": 0},
             "run_ts": "2026-10-19T20:09:04+00:00",
             "scope": "ALL",

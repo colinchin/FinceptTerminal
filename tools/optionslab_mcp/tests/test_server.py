@@ -325,6 +325,39 @@ def test_health_drops_history_and_large_detail(fake):
     assert len(text(call("optionslab_health"))) < 20_000
 
 
+def test_health_passes_state_through_first(fake):
+    out = json.loads(text(call("optionslab_health")))
+    assert out["state"] == "ready"
+    assert list(out)[0] == "state"  # read before the counts
+    assert "note" not in out
+
+
+def test_health_not_ready_keeps_state_and_note_and_is_not_an_error(fake):
+    # Options Lab 2026-10-21+: no stored health run yet -> empty checks, all-zero counts, state + note.
+    note = "health checks have not run yet: they run at startup and after every refresh cycle"
+    fake.data["/api/health"] = {"checks": [], "counts": {"PASS": 0, "FAIL": 0, "UNTESTED": 0, "FLAG": 0},
+                                "run_ts": None, "scope": "ALL", "state": "not_ready", "note": note}  # fmt: skip
+    r = call("optionslab_health")
+    assert not r.is_error, text(r)
+    out = json.loads(text(r))
+    assert out["state"] == "not_ready" and out["note"] == note
+    assert out["checks"] == [] and out["counts"]["FAIL"] == 0 and out["market_open"] is None
+
+
+def test_health_from_older_options_lab_without_state(fake):
+    del fake.data["/api/health"]["state"]
+    out = json.loads(text(call("optionslab_health")))
+    assert out["state"] is None and out["counts"]["PASS"] == 6
+
+
+def test_health_description_explains_not_ready():
+    async def go():
+        return await server.mcp.list_tools()
+
+    desc = next(t.description for t in asyncio.run(go()) if t.name == "optionslab_health")
+    assert "not_ready" in desc and desc.startswith("Options Lab health checks")
+
+
 def test_watchlist_adds_percent_iv(fake):
     out = json.loads(text(call("optionslab_watchlist")))
     spy = next(r for r in out["rows"] if r["ticker"] == "SPY")
