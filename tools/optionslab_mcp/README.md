@@ -19,10 +19,18 @@ write endpoints (`POST /api/refresh`, `/api/paper/pause|resume`, `/api/tracker`,
 The tests enforce all of these, including hostile tool arguments, a compromised watchlist, redirects and
 bad URLs (see `tests/test_server.py`, section "read-only guarantee").
 
-**Caveat (Options Lab side, not fixable here):** two of Options Lab's *GET* endpoints have side effects.
-`GET /api/health` runs and saves a health check when none is cached (only after a failed startup run), and
-`GET /api/paper` / `/api/session-summary` refresh the paper trader's in-memory price/FX cache from an API
-thread. Neither places, changes or cancels anything, but they are not strictly side-effect free.
+**Options Lab's GET endpoints change nothing** (fixed on the Options Lab side in commit `36ca652`, its
+SPEC_PROPOSALS.md Part A, deployed on goldie-oci 2026-10-21). No GET writes Options Lab's database or touches
+its paper trader, scheduler or their caches; a parametrised test over every GET route enforces it
+(`tests/test_get_purity.py` in the options-pricing repo). Before a health run exists (just after a restart whose
+startup run failed), `/api/health` returns `state: "not_ready"` with no checks and zero counts, instead of
+running one; `optionslab_health` does not pass `state` through yet, so treat zero counts with no `run_ts` as
+"not run yet".
+
+Before that fix, the review found that two of Options Lab's *GET* endpoints had side effects.
+`GET /api/health` ran and saved a health check when none was cached (only after a failed startup run), and
+`GET /api/paper` / `/api/session-summary` refreshed the paper trader's in-memory price/FX cache from an API
+thread. Neither placed, changed or cancelled anything, but they were not strictly side-effect free.
 
 ## Tools
 
