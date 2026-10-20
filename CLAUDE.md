@@ -49,7 +49,11 @@ cmake --build --preset win-dev         # rebuild after every change
   If builds crawl, cap jobs: `-DFINCEPT_MAX_COMPILE_JOBS=4`.
 - A one-line change should rebuild in seconds. If it takes minutes, check free RAM first.
 - Build output (`fincept-qt/build*/`) is git-ignored. Never commit build artefacts.
-- First launch: choose "Continue as Guest". The app sets up its own Python venvs
+- There is no guest mode in this version: the app needs a (free) Fincept account and must reach
+  `https://api.fincept.in` (auth, macro, news, LLM proxy). Bitdefender flags that domain as an
+  "infected web resource" — it is allow-listed by domain in Bitdefender on this machine.
+  A "Network error" at sign-in means that host is being blocked, not that the build is broken.
+- First launch: the app sets up its own Python venvs
   (`venv-numpy1`, `venv-numpy2`) via uv — let that finish before testing Python-backed screens.
 - Python scripts live in `fincept-qt/scripts/`. Test one standalone, e.g.
   `python scripts/yfinance_data.py quote AAPL` (from `fincept-qt`).
@@ -76,6 +80,34 @@ cmake --build --preset win-dev         # rebuild after every change
 - Style: 4 spaces, 120 cols, snake_case functions/vars, PascalCase types, trailing `_` on members.
 - Prefer adding new files over editing upstream files, so upstream merges stay easy.
   When an upstream file must change, keep the edit small and mark it `// [equity-custom]`.
+
+## Broker setup
+- STATUS: IBKR is NOT connected. Test all trading changes with Fincept's built-in paper-trading
+  engine (`src/trading/PaperTrading.*`) until a working IBKR path exists.
+- The IBKR paper username is already used by a headless **IB Gateway (TWS API) on goldie-oci**
+  (Docker, `EXISTING_SESSION_DETECTED_ACTION: primary`, `READ_ONLY_API: yes`, port 4002 bound to
+  127.0.0.1) for the separate options-pricing project. IBKR allows one session per username, and
+  that server session always reclaims it — so a local Client Portal Gateway login with the paper
+  user will keep getting dropped. Do not use the Client Portal Gateway with the paper login, and
+  never change/reset the paper password (it would break goldie-oci's automated login).
+- Planned path: reach the goldie-oci Gateway via SSH tunnel (`ssh -L 4002:127.0.0.1:4002 goldie-oci`)
+  with a distinct TWS API client ID (options-pricing uses 17/19/21). Fincept's existing
+  `IBKRBroker` speaks the Client Portal REST API, not the TWS socket API, so this needs a new
+  adapter or a local bridge — design it before building it.
+- Paper account: DUP767567. Background on the existing Client Portal adapter
+  (`src/trading/brokers/ibkr/IBKRBroker.cpp`; ACCOUNT ID = DU…, GATEWAY URL = local Client Portal
+  Gateway): it does no custom SSL handling, so it only works with the gateway set to
+  `listenSsl: false` at `http://localhost:5000`; it never calls `ssodh/init` or `/tickle`, so
+  sessions are not established or kept alive. Any TLS relaxation must be limited to localhost.
+
+## Options Lab link (separate project on goldie-oci)
+- Options Lab (D:\Source\options-pricing, deployed on goldie-oci) is the options engine; Fincept is
+  the cockpit. Its web UI + API are reachable over Tailscale at `http://100.89.79.67:8095`.
+- Integration is built in steps, one at a time, each with its own spec:
+  `docs/custom/OPTIONS_LAB_STEP2_SCREEN.md` (embed the dashboard as a Fincept screen),
+  `docs/custom/OPTIONS_LAB_STEP3_MCP.md` (read-only MCP server for AI Chat). Step 4 (IBKR data via the
+  goldie-oci Gateway) has no spec yet — do not start it.
+- Never call Options Lab's write endpoints (POST/DELETE) from Fincept code or tools.
 
 ## Trading safety (non-negotiable)
 - Every trading change is proven in **paper trading** before it can touch a live broker account.
